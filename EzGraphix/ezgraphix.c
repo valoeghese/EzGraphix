@@ -241,8 +241,8 @@ int main(void) {
 
 		"void main() {\n"
 		// map from 0,0,WIDTH,HEIGHT to -1,1,-1,1.
-		//"  vec2 half_size = window_size * 0.5;\n"
-		"  gl_Position = vec4(pos.x, pos.y, 0.0, 1.0);\n"
+		"  vec2 half_size = window_size * 0.5;\n"
+		"  gl_Position = vec4((pos / half_size) - 1, 0.0, 1.0);\n"
 		"}";
 
 	unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
