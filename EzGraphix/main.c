@@ -32,5 +32,5 @@ void draw(void) {
 
 void cleanup(void) {
 	// delete objects here
-	//ezDelete(object);
+	ezDelete(object);
 }

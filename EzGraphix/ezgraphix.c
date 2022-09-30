@@ -79,7 +79,7 @@ void ezSetOutOfMemoryCallback(EZmemerrfun fn) {
 
 // Object Functions
 
-EZobject* ezCreateRect(double x0, double y0, double x1, double y1) {
+EZobject* ezCreateRect(float x0, float y0, float x1, float y1) {
 	EZobject* obj = malloc(sizeof(EZobject));
 
 	if (obj == NULL) {
@@ -103,8 +103,8 @@ EZobject* ezCreateRect(double x0, double y0, double x1, double y1) {
 
 	// todo this was bad. *do* do this
 	// (i used to create an object for every draw call)
-	glGenBuffers(1, &obj->vbo);
-	glGenBuffers(1, &obj->ibo);
+	glGenBuffers(1, &(obj->vbo));
+	glGenBuffers(1, &(obj->ibo));
 
 	const float vertices[12] = {
 		x0, y1,
@@ -113,7 +113,7 @@ EZobject* ezCreateRect(double x0, double y0, double x1, double y1) {
 		x1, y1
 	};
 
-	glBindBuffer(GL_ARRAY_BUFFER, &obj->vbo);
+	glBindBuffer(GL_ARRAY_BUFFER, &(obj->vbo));
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices, GL_STATIC_DRAW);
 	
 	const int indices[6] = {
@@ -121,12 +121,16 @@ EZobject* ezCreateRect(double x0, double y0, double x1, double y1) {
 		0, 3, 2 /* clockwise \| */
 	};
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, &obj->ibo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, &(obj->ibo));
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices, GL_STATIC_DRAW);
 
 	// (location = 0) in vec2 pos
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 0, 0);
 	glEnableVertexAttribArray(0);
+
+	// unbind buffers
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	return obj;
 }
@@ -139,8 +143,8 @@ void ezColour(EZobject* object, float r, float g, float b) {
 
 void ezDelete(EZobject* object) {
 	// delete from GL memory
-	glDeleteBuffers(1, object->vbo);
-	glDeleteBuffers(1, object->ibo);
+	glDeleteBuffers(1, &(object->vbo));
+	glDeleteBuffers(1, &(object->ibo));
 
 	// free from heap
 	free(object);
@@ -149,35 +153,35 @@ void ezDelete(EZobject* object) {
 // Draw Functions
 
 void ezDraw(EZobject *object) {
-	int vbo;
-	int ibo;
-	glGenBuffers(1, &vbo);
-	glGenBuffers(1, &ibo);
+	//int vbo;
+	//int ibo;
+	//glGenBuffers(1, &vbo);
+	//glGenBuffers(1, &ibo);
 
-	const float vertices[12] = {
-		0, 1,
-		0, 0,
-		1, 0,
-		1, 1
-	};
+	//const float vertices[12] = {
+	//	0, 1,
+	//	0, 0,
+	//	1, 0,
+	//	1, 1
+	//};
 
-	glBindBuffer(GL_ARRAY_BUFFER, &vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices, GL_STATIC_DRAW);
+	//glBindBuffer(GL_ARRAY_BUFFER, &vbo);
+	//glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices, GL_STATIC_DRAW);
 
-	const int indices[6] = {
-		0, 2, 1, /* clockwise |\ */
-		0, 3, 2 /* clockwise \| */
-	};
+	//const int indices[6] = {
+	//	0, 2, 1, /* clockwise |\ */
+	//	0, 3, 2 /* clockwise \| */
+	//};
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, &ibo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices, GL_STATIC_DRAW);
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, &ibo);
+	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices, GL_STATIC_DRAW);
 
-	// (location = 0) in vec2 pos
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 0, 0);
-	glEnableVertexAttribArray(0);
+	//// (location = 0) in vec2 pos
+	//glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 0, 0);
+	//glEnableVertexAttribArray(0);
 
-	//glBindBuffer(GL_ARRAY_BUFFER, &object->vbo);
-	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, &object->ibo);
+	glBindBuffer(GL_ARRAY_BUFFER, &(object->vbo));
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, &(object->ibo));
 
 	glUniform3f(glGetUniformLocation(g_ezCtx.shaderProgram, "colour"), object->r, object->g, object->b);
 
@@ -194,8 +198,8 @@ void ezDraw(EZobject *object) {
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	
-	glDeleteBuffers(1, &vbo);
-	glDeleteBuffers(1, &ibo);
+	/*glDeleteBuffers(1, &vbo);
+	glDeleteBuffers(1, &ibo);*/
 }
 
 //===============
