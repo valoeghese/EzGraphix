@@ -20,6 +20,8 @@ int setup(void) {
 	ezSetKeyCallback(keyCallback);
 	object = ezCreateRect(0, 0, 1, 1);
 
+	ezColour(object, 0.0f, 0.0f, 1.0f);
+
 	return EZ_OK;
 }
 

@@ -101,7 +101,8 @@ EZobject* ezCreateRect(double x0, double y0, double x1, double y1) {
 	obj->b = 1.0f;
 	obj->g = 1.0f;
 
-	// todo this is bad. *dont* do this
+	// todo this was bad. *do* do this
+	// (i used to create an object for every draw call)
 	glGenBuffers(1, &obj->vbo);
 	glGenBuffers(1, &obj->ibo);
 
@@ -138,8 +139,8 @@ void ezColour(EZobject* object, float r, float g, float b) {
 
 void ezDelete(EZobject* object) {
 	// delete from GL memory
-	glDeleteBuffers(GL_ARRAY_BUFFER, object->vbo);
-	glDeleteBuffers(GL_ELEMENT_ARRAY_BUFFER, object->ibo);
+	glDeleteBuffers(1, object->vbo);
+	glDeleteBuffers(1, object->ibo);
 
 	// free from heap
 	free(object);
@@ -148,8 +149,35 @@ void ezDelete(EZobject* object) {
 // Draw Functions
 
 void ezDraw(EZobject *object) {
-	glBindBuffer(GL_ARRAY_BUFFER, &object->vbo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, &object->ibo);
+	int vbo;
+	int ibo;
+	glGenBuffers(1, &vbo);
+	glGenBuffers(1, &ibo);
+
+	const float vertices[12] = {
+		0, 1,
+		0, 0,
+		1, 0,
+		1, 1
+	};
+
+	glBindBuffer(GL_ARRAY_BUFFER, &vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices, GL_STATIC_DRAW);
+
+	const int indices[6] = {
+		0, 2, 1, /* clockwise |\ */
+		0, 3, 2 /* clockwise \| */
+	};
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, &ibo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices, GL_STATIC_DRAW);
+
+	// (location = 0) in vec2 pos
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 0, 0);
+	glEnableVertexAttribArray(0);
+
+	//glBindBuffer(GL_ARRAY_BUFFER, &object->vbo);
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, &object->ibo);
 
 	glUniform3f(glGetUniformLocation(g_ezCtx.shaderProgram, "colour"), object->r, object->g, object->b);
 
@@ -162,6 +190,12 @@ void ezDraw(EZobject *object) {
 
 	//glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(int), GL_UNSIGNED_INT, 0);
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	
+	glDeleteBuffers(1, &vbo);
+	glDeleteBuffers(1, &ibo);
 }
 
 //===============
@@ -217,8 +251,8 @@ int main(void) {
 
 		"uniform vec3 colour;\n"
 
-		"void main() {\n"// TODO put back colour
-		"  gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);\n"
+		"void main() {\n"
+		"  gl_FragColor = vec4(colour, 1.0);\n"
 		"}";
 
 	unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
