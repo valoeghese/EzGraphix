@@ -166,7 +166,7 @@ EZobject* ezCreateRect(float width, float height) {
 	obj->height = height;
 	obj->filletRadius = 0;
 
-	// this used to be bad. *do* do this
+	// this used to be bad, but isn't anymore. *do* do this
 	// (i used to create an object for every draw call)
 	glGenBuffers(1, &(obj->vbo));
 	glGenBuffers(1, &(obj->ibo));
