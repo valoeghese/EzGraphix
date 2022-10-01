@@ -2,29 +2,39 @@
 // Note: A console will still open when launching from Visual Studio, but the program will not interact with it
 //#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
 
-#include <stdlib.h>
 #include "ezgraphix.h"
 
-#define WIDTH 690
-#define HEIGHT 420
+float width = 690;
+float height = 420;
+
+EZobject* object;
 
 void keyCallback(int key, int action) {
 	ezClose();
 }
 
-EZobject* object;
+void resizeCallback(int w, int h) {
+	width = (float) w;
+	height = (float) h;
+
+	ezMove(object, width / 3, 3 * height / 8);
+	ezResize(object, width / 3, height / 4);
+	printf("Resize\n");
+}
 
 int setup(void) {
 	// Perform setup here
 	// e.g. configuring the window, setting up callback functions, and some object creation
 	ezTitle("My Graphics Program!");
-	ezSize(WIDTH, HEIGHT);
+	ezDisplaySize(width, height);
 
 	ezSetKeyCallback(keyCallback);
-	object = ezCreateRect(WIDTH / 3, 0, 2 * WIDTH / 3, HEIGHT / 4);
-	// TODO, transformations (ezMoveRect...). Should ezCreateRect just be [width, height]? Then use position as move (vec2 uniform). Or have it take initial pos rather than assume 0.
+	ezSetResizeCallback(resizeCallback);
+
+	object = ezCreateRect(width / 3, height / 4);
 
 	ezColour(object, 0.0f, 0.0f, 1.0f);
+	ezMove(object, width / 3, 3 * height / 8);
 
 	return EZ_OK;
 }

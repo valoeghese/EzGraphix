@@ -2,6 +2,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <Windows.h>
+
+// enable optimus!
+// https://stackoverflow.com/questions/6036292/select-a-graphic-device-in-windows-opengl
+_declspec(dllexport) DWORD NvOptimusEnablement = 1;
+_declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 
 // these functions must be declared
 int setup(void); // called for setup
@@ -11,6 +17,7 @@ void cleanup(void); // called at the end to clean up memory used
 struct EzGlobalContext {
 	GLFWwindow* window;
 	EZkeyfun keyFun;
+	EZresizefun resizeFun;
 	EZmemerrfun memErrFun;
 	int winWidth;
 	int winHeight;
@@ -30,6 +37,8 @@ struct _EZobject {
 	float r;
 	float g;
 	float b;
+	float x;
+	float y;
 };
 
 // Window
@@ -38,7 +47,7 @@ void ezTitle(const char* title) {
 	glfwSetWindowTitle(g_ezCtx.window, title);
 }
 
-void ezSize(const int width, const int height) {
+void ezDisplaySize(const int width, const int height) {
 	g_ezCtx.winWidth = width;
 	g_ezCtx.winHeight = height;
 	glfwSetWindowSize(g_ezCtx.window, width, height);
@@ -62,24 +71,41 @@ int ezGetHeight(void) {
 
 // Callbacks
 
+// Impl
+
 void ezKeyHook(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	if (g_ezCtx.keyFun) {
 		g_ezCtx.keyFun(key, action);
 	}
 }
 
-void ezSetKeyCallback(EZkeyfun fn) {
-	g_ezCtx.keyFun = fn;
+void ezResizeHook(GLFWwindow* window, int width, int height) {
+	ezDisplaySize(width, height);
+
+	if (g_ezCtx.resizeFun) {
+		g_ezCtx.resizeFun(width, height);
+	}
+}
+
+// API
+
+void ezSetKeyCallback(EZkeyfun callback) {
+	g_ezCtx.keyFun = callback;
 	glfwSetKeyCallback(g_ezCtx.window, ezKeyHook);
 }
 
-void ezSetOutOfMemoryCallback(EZmemerrfun fn) {
-	g_ezCtx.memErrFun = fn;
+void ezSetResizeCallback(EZresizefun callback) {
+	g_ezCtx.resizeFun = callback;
+	glfwSetWindowSizeCallback(g_ezCtx.window, ezResizeHook);
+}
+
+void ezSetOutOfMemoryCallback(EZmemerrfun callback) {
+	g_ezCtx.memErrFun = callback;
 }
 
 // Object Functions
 
-EZobject* ezCreateRect(float x0, float y0, float x1, float y1) {
+EZobject* ezCreateRect(float width, float height) {
 	EZobject* obj = malloc(sizeof(EZobject));
 
 	if (obj == NULL) {
@@ -97,24 +123,29 @@ EZobject* ezCreateRect(float x0, float y0, float x1, float y1) {
 		return NULL;
 	}
 
+	// Set colour to white
 	obj->r = 1.0f;
 	obj->b = 1.0f;
 	obj->g = 1.0f;
 
-	// todo this was bad. *do* do this
+	// Set position
+	obj->x = 0.0f;
+	obj->y = 0.0f;
+
+	// this used to be bad. *do* do this
 	// (i used to create an object for every draw call)
 	glGenBuffers(1, &(obj->vbo));
 	glGenBuffers(1, &(obj->ibo));
 
 	const float vertices[12] = {
-		x0, y1,
-		x0, y0,
-		x1, y0,
-		x1, y1
+		0, height,
+		0, 0,
+		width, 0,
+		width, height
 	};
 
 	glBindBuffer(GL_ARRAY_BUFFER, &(obj->vbo));
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices, GL_DYNAMIC_DRAW);
 	
 	const int indices[6] = {
 		0, 2, 1, /* clockwise |\ */
@@ -135,6 +166,26 @@ EZobject* ezCreateRect(float x0, float y0, float x1, float y1) {
 	return obj;
 }
 
+void ezMove(EZobject* object, float x, float y) {
+	object->x = x;
+	object->y = y;
+}
+
+void ezResize(EZobject* object, float width, float height) {
+	glBindBuffer(GL_ARRAY_BUFFER, &(object->vbo));
+
+	const float vertices[12] = {
+		0, height,
+		0, 0,
+		width, 0,
+		width, height
+	};
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices, GL_DYNAMIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
 void ezColour(EZobject* object, float r, float g, float b) {
 	object->r = r;
 	object->g = g;
@@ -152,38 +203,16 @@ void ezDelete(EZobject* object) {
 
 // Draw Functions
 
+void ezBackgroundColour(float r, float g, float b) {
+	glClearColor(r, g, b, 1.0f);
+}
+
 void ezDraw(EZobject *object) {
-	//int vbo;
-	//int ibo;
-	//glGenBuffers(1, &vbo);
-	//glGenBuffers(1, &ibo);
-
-	//const float vertices[12] = {
-	//	0, 1,
-	//	0, 0,
-	//	1, 0,
-	//	1, 1
-	//};
-
-	//glBindBuffer(GL_ARRAY_BUFFER, &vbo);
-	//glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices, GL_STATIC_DRAW);
-
-	//const int indices[6] = {
-	//	0, 2, 1, /* clockwise |\ */
-	//	0, 3, 2 /* clockwise \| */
-	//};
-
-	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, &ibo);
-	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices, GL_STATIC_DRAW);
-
-	//// (location = 0) in vec2 pos
-	//glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 0, 0);
-	//glEnableVertexAttribArray(0);
-
 	glBindBuffer(GL_ARRAY_BUFFER, &(object->vbo));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, &(object->ibo));
 
 	glUniform3f(glGetUniformLocation(g_ezCtx.shaderProgram, "colour"), object->r, object->g, object->b);
+	glUniform2f(glGetUniformLocation(g_ezCtx.shaderProgram, "position"), object->x, object->y);
 
 	// todo move this to separate method?
 	int err = glGetError();
@@ -197,9 +226,6 @@ void ezDraw(EZobject *object) {
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	
-	/*glDeleteBuffers(1, &vbo);
-	glDeleteBuffers(1, &ibo);*/
 }
 
 //===============
@@ -235,14 +261,15 @@ int main(void) {
 
 	const char* vertexShaderSource =
 		"#version 330 core\n"
-		"layout(location = 0) in vec2 pos;\n"
+		"layout(location = 0) in vec2 dimensions;\n"
 
 		"uniform vec2 window_size;\n"
+		"uniform vec2 position;\n"
 
 		"void main() {\n"
 		// map from 0,0,WIDTH,HEIGHT to -1,1,-1,1.
 		"  vec2 half_size = window_size * 0.5;\n"
-		"  gl_Position = vec4((pos / half_size) - 1, 0.0, 1.0);\n"
+		"  gl_Position = vec4(((dimensions + position) / half_size) - 1, 0.0, 1.0);\n"
 		"}";
 
 	unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -293,9 +320,12 @@ int main(void) {
 	g_ezCtx.shaderProgram = shaderProgram;
 
 	// configure view port default & null default callbacks
-	ezSize(500, 500);
+	ezDisplaySize(500, 500);
 	g_ezCtx.keyFun = NULL;
 	g_ezCtx.memErrFun = NULL;
+
+	// Default Clear Colour
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 	// Set Up
 	if (setup() != EZ_OK) {
@@ -307,8 +337,6 @@ int main(void) {
 	printf("Initialised Successfully. Starting Main Loop.\n");
 
 	// main lööp
-
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 	while (!glfwWindowShouldClose(g_ezCtx.window)) {
 		glClear(GL_COLOR_BUFFER_BIT);

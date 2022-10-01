@@ -23,29 +23,79 @@ extern "C" {
 
 typedef void (*EZkeyfun)(int key, int action);
 typedef int (*EZmemerrfun)(void);
+typedef void (*EZresizefun)(int width, int height);
 
 struct _EZobject;
 typedef struct _EZobject EZobject;
 
+// ================
 // Window Functions
+// ================
+
+// Sets the title of the window
 void ezTitle(const char* title);
-void ezSize(const int width, const int height);
+
+// Sets the size of the window
+void ezDisplaySize(const int width, const int height);
+
+// Closes the application immediately and exits
 void ezClose(void);
 
+// Gets the window width
 int ezGetWidth(void);
+
+// Gets the window height
 int ezGetHeight(void);
 
+// ==================
 // Callback Functions
-void ezSetKeyCallback(EZkeyfun keyFn);
-void ezSetOutOfMemoryCallback(EZmemerrfun keyFn);
+// ==================
 
+// Sets the function to run when a key is pressed
+// Must follow the pattern:
+// void functionName(int key, int action)
+void ezSetKeyCallback(EZkeyfun callback);
+
+// Sets the function to run when a new object cannot be allocated on the heap
+// Does not handle other out of memory issues.
+// Must follow the pattern:
+// int functionName(void)
+void ezSetOutOfMemoryCallback(EZmemerrfun callback);
+
+// Sets the function to run when the window is resized
+// DO NOT CALL ezDisplaySize FROM THIS
+// Must follow the pattern:
+// void functionName(int width, int height)
+void ezSetResizeCallback(EZresizefun callback);
+
+// ================
 // Object Functions
+// ================
+
+// Creates a rectangle object of the given width and height
 // EZ objects are allocated on the heap and in GL memory, so make sure to delete them via ezDelete() when you're done with them
-EZobject* ezCreateRect(float x0, float y0, float x1, float y1);
+EZobject* ezCreateRect(float width, float height);
+
+// Moves an object to the given position
+void ezMove(EZobject* object, float x, float y);
+
+// Resizes an object to the given width and height
+void ezResize(EZobject* object, float width, float height);
+
+// Sets the colour of an object
 void ezColour(EZobject* object, float r, float g, float b);
+
+// Deletes an object from memory
 void ezDelete(EZobject* object);
 
+// ==============
 // Draw Functions
+// ==============
+
+// Sets the background colour
+void ezBackgroundColour(float r, float g, float b);
+
+// Draws an object
 void ezDraw(EZobject* object);
 
 #ifdef __cplusplus
