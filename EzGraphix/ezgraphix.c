@@ -91,7 +91,7 @@ void ezResizeHook(GLFWwindow* window, int width, int height) {
 
 void ezMouseHook(GLFWwindow* window, double mouseX, double mouseY) {
 	if (g_ezCtx.mouseFun) {
-		g_ezCtx.mouseFun(mouseX, mouseY);
+		g_ezCtx.mouseFun(mouseX, (double)g_ezCtx.winHeight - mouseY);
 	}
 }
 
@@ -108,9 +108,9 @@ void ezSetKeyFunction(EZkeyfun function) {
 	glfwSetKeyCallback(g_ezCtx.window, ezKeyHook);
 }
 
-void ezSetMouseFunction(EZmousefun function) {
+void ezSetMouseMoveFunction(EZmousefun function) {
 	g_ezCtx.mouseFun = function;
-	glfwSetMouseButtonCallback(g_ezCtx.window, ezMouseHook);
+	glfwSetCursorPosCallback(g_ezCtx.window, ezMouseHook);
 }
 
 void ezSetClickFunction(EZclickfun function) {

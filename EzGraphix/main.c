@@ -15,6 +15,10 @@ void click(int button, int action) {
 	printf("Action %d\n", action);
 }
 
+void mouseMove(double mouseX, double mouseY) {
+	printf("Move %lf %lf\n", mouseX, mouseY);
+}
+
 void resize(int width, int height)
 {
 	ezMove(object, width / 3, 3 * height / 8);
@@ -33,6 +37,7 @@ int setup(void)
 
 	ezSetKeyFunction(key);
 	ezSetClickFunction(click);
+	ezSetMouseMoveFunction(mouseMove);
 	ezSetResizeFunction(resize);
 
 	object = ezCreateRect(width / 3, height / 4);

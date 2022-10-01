@@ -61,7 +61,7 @@ void ezSetKeyFunction(EZkeyfun function);
 // Sets the function to run when the mouse is moved on the window
 // Must follow the pattern:
 // void functionName(double mouseX, double mouseY)
-void ezSetMouseFunction(EZmousefun function);
+void ezSetMouseMoveFunction(EZmousefun function);
 
 // Sets the function to run when the mouse is moved on the window
 // Must follow the pattern:
