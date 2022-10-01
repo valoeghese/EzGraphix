@@ -27,7 +27,7 @@ typedef void (*EZresizefun)(int width, int height);
 typedef void (*EZmousefun)(double mouseX, double mouseY);
 typedef void (*EZclickfun)(int button, int action);
 
-struct _EZobject;
+struct EZobject;
 typedef struct _EZobject EZobject;
 
 // ================
@@ -102,6 +102,10 @@ void ezResize(EZobject* object, float width, float height);
 
 // Sets the colour of an object
 void ezColour(EZobject* object, float r, float g, float b);
+
+// Sets the radius of the edge fillet of an object.
+// Should be <= half the smallest dimension of the object.
+void ezFilletRadius(EZobject* object, float radius);
 
 // Deletes an object from memory
 void ezDelete(EZobject* object);

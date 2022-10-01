@@ -43,9 +43,9 @@ struct _EZobject {
 	// Position
 	float x;
 	float y;
-	// Centre Position
-	float centreX;
-	float centreY;
+	// Dimensions
+	float width;
+	float height;
 	// Fillet Radius
 	float filletRadius;
 };
@@ -162,8 +162,8 @@ EZobject* ezCreateRect(float width, float height) {
 	obj->y = 0.0f;
 
 	// Set data used for fillet
-	obj->centreX = width;
-	obj->centreY = height;
+	obj->width = width;
+	obj->height = height;
 	obj->filletRadius = 0;
 
 	// this used to be bad. *do* do this
@@ -206,6 +206,11 @@ void ezMove(EZobject* object, float x, float y) {
 }
 
 void ezResize(EZobject* object, float width, float height) {
+	// set properties
+	object->width = width;
+	object->height = height;
+
+	// update buffer data
 	glBindBuffer(GL_ARRAY_BUFFER, &(object->vbo));
 
 	const float vertices[12] = {
@@ -224,6 +229,10 @@ void ezColour(EZobject* object, float r, float g, float b) {
 	object->r = r;
 	object->g = g;
 	object->b = b;
+}
+
+void ezFilletRadius(EZobject* object, float radius) {
+	object->filletRadius = radius;
 }
 
 void ezDelete(EZobject* object) {
@@ -247,6 +256,9 @@ void ezDraw(EZobject *object) {
 
 	glUniform3f(glGetUniformLocation(g_ezCtx.shaderProgram, "colour"), object->r, object->g, object->b);
 	glUniform2f(glGetUniformLocation(g_ezCtx.shaderProgram, "position"), object->x, object->y);
+
+	glUniform2f(glGetUniformLocation(g_ezCtx.shaderProgram, "dimensions"), object->width, object->height);
+	glUniform1f(glGetUniformLocation(g_ezCtx.shaderProgram, "filletRadius"), object->filletRadius);
 
 	// todo move this to separate method?
 	int err = glGetError();
@@ -295,15 +307,18 @@ int main(void) {
 
 	const char* vertexShaderSource =
 		"#version 330 core\n"
-		"layout(location = 0) in vec2 dimensions;\n"
+		"layout(location = 0) in vec2 vertexPosition;\n"
+
+		"out vec2 posPass;\n"
 
 		"uniform vec2 window_size;\n"
 		"uniform vec2 position;\n"
 
 		"void main() {\n"
+		"  posPass = vertexPosition;\n" // position relative to the shape. Will be interpolated for each pixel when passed to the fragment shader
 		// map from 0,0,WIDTH,HEIGHT to -1,1,-1,1.
 		"  vec2 half_size = window_size * 0.5;\n"
-		"  gl_Position = vec4(((dimensions + position) / half_size) - 1, 0.0, 1.0);\n"
+		"  gl_Position = vec4(((vertexPosition + position) / half_size) - 1, 0.0, 1.0);\n"
 		"}";
 
 	unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -314,9 +329,44 @@ int main(void) {
 	const char* fragmentShaderSource =
 		"#version 330 core\n"
 
+		"in vec2 posPass;\n"
+
 		"uniform vec3 colour;\n"
 
+		"uniform vec2 dimensions;\n"
+		"uniform float filletRadius;\n"
+
 		"void main() {\n"
+		// detect edge boxes that encompass the fillet curves,
+		// then if within one of those boxes do a squrared-distance calculation to the inside corner
+		// this creates a smooth arc around a corner
+		// ... so long as the fillet radius is <= half length of shortest dimension
+		"  if (posPass.x <= filletRadius) {\n"
+		"    float dx = posPass.x - filletRadius;\n"
+
+		"    if (posPass.y <= filletRadius) {\n"
+		"      float dy = posPass.y - filletRadius;\n"
+		"      if (dx * dx + dy * dy > filletRadius * filletRadius) discard;\n"
+		"    }\n"
+		"    else if (posPass.y >= dimensions.y - filletRadius) {\n"
+		"      float dy = posPass.y - (dimensions.y - filletRadius);\n"
+		"      if (dx * dx + dy * dy > filletRadius * filletRadius) discard;\n"
+		"    }\n"
+		"  }\n"
+		// and the other two corners...
+		"  else if (posPass.x >= dimensions.x - filletRadius) {\n"
+		"    float dx = posPass.x - (dimensions.x - filletRadius);\n"
+
+		"    if (posPass.y <= filletRadius) {\n"
+		"      float dy = posPass.y - filletRadius;\n"
+		"      if (dx * dx + dy * dy > filletRadius * filletRadius) discard;\n"
+		"    }\n"
+		"    else if (posPass.y >= dimensions.y - filletRadius) {\n"
+		"      float dy = posPass.y - (dimensions.y - filletRadius);\n"
+		"      if (dx * dx + dy * dy > filletRadius * filletRadius) discard;\n"
+		"    }\n"
+		"  }\n"
+
 		"  gl_FragColor = vec4(colour, 1.0);\n"
 		"}";
 

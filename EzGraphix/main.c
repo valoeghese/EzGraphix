@@ -93,6 +93,7 @@ int setup(void)
 
 	object = ezCreateRect(width / 3, height / 4);
 
+	ezFilletRadius(object, 20.0);
 	ezColour(object, 0.0f, 0.0f, 1.0f);
 	ezMove(object, width / 3, 3 * height / 8);
 
