@@ -4,32 +4,31 @@
 
 #include "ezgraphix.h"
 
-float width = 690;
-float height = 420;
-
 EZobject* object;
 
-void keyCallback(int key, int action) {
+void key(int key, int action)
+{
 	ezClose();
 }
 
-void resizeCallback(int w, int h) {
-	width = (float) w;
-	height = (float) h;
-
+void resize(int width, int height)
+{
 	ezMove(object, width / 3, 3 * height / 8);
 	ezResize(object, width / 3, height / 4);
-	printf("Resize\n");
 }
 
-int setup(void) {
+int setup(void)
+{
+	const int width = 690;
+	const int height = 420;
+
 	// Perform setup here
 	// e.g. configuring the window, setting up callback functions, and some object creation
 	ezTitle("My Graphics Program!");
 	ezDisplaySize(width, height);
 
-	ezSetKeyCallback(keyCallback);
-	ezSetResizeCallback(resizeCallback);
+	ezSetKeyFunction(key);
+	ezSetResizeFunction(resize);
 
 	object = ezCreateRect(width / 3, height / 4);
 
@@ -39,12 +38,14 @@ int setup(void) {
 	return EZ_OK;
 }
 
-void draw(void) {
+void draw(void)
+{
 	// Draw a frame here
 	ezDraw(object);
 }
 
-void cleanup(void) {
+void cleanup(void)
+{
 	// delete objects here
 	ezDelete(object);
 }

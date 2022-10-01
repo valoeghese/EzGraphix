@@ -17,6 +17,8 @@ void cleanup(void); // called at the end to clean up memory used
 struct EzGlobalContext {
 	GLFWwindow* window;
 	EZkeyfun keyFun;
+	EZmousefun mouseFun;
+	EZclickfun clickFun;
 	EZresizefun resizeFun;
 	EZmemerrfun memErrFun;
 	int winWidth;
@@ -71,7 +73,7 @@ int ezGetHeight(void) {
 
 // Callbacks
 
-// Impl
+// Impl (GLFW event handlers)
 
 void ezKeyHook(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	if (g_ezCtx.keyFun) {
@@ -87,20 +89,42 @@ void ezResizeHook(GLFWwindow* window, int width, int height) {
 	}
 }
 
+void ezMouseHook(GLFWwindow* window, double mouseX, double mouseY) {
+	if (g_ezCtx.mouseFun) {
+		g_ezCtx.mouseFun(mouseX, mouseY);
+	}
+}
+
+void ezClickHook(GLFWwindow* window, int button, int action, int mods) {
+	if (g_ezCtx.clickFun) {
+		g_ezCtx.clickFun(button, action);
+	}
+}
+
 // API
 
-void ezSetKeyCallback(EZkeyfun callback) {
-	g_ezCtx.keyFun = callback;
+void ezSetKeyFunction(EZkeyfun function) {
+	g_ezCtx.keyFun = function;
 	glfwSetKeyCallback(g_ezCtx.window, ezKeyHook);
 }
 
-void ezSetResizeCallback(EZresizefun callback) {
-	g_ezCtx.resizeFun = callback;
+void ezSetMouseFunction(EZmousefun function) {
+	g_ezCtx.mouseFun = function;
+	glfwSetMouseButtonCallback(g_ezCtx.window, ezMouseHook);
+}
+
+void ezSetClickFunction(EZclickfun function) {
+	g_ezCtx.clickFun = function;
+	glfwSetMouseButtonCallback(g_ezCtx.window, ezClickHook);
+}
+
+void ezSetResizeFunction(EZresizefun function) {
+	g_ezCtx.resizeFun = function;
 	glfwSetWindowSizeCallback(g_ezCtx.window, ezResizeHook);
 }
 
-void ezSetOutOfMemoryCallback(EZmemerrfun callback) {
-	g_ezCtx.memErrFun = callback;
+void ezSetOutOfMemoryFunction(EZmemerrfun function) {
+	g_ezCtx.memErrFun = function;
 }
 
 // Object Functions

@@ -24,6 +24,8 @@ extern "C" {
 typedef void (*EZkeyfun)(int key, int action);
 typedef int (*EZmemerrfun)(void);
 typedef void (*EZresizefun)(int width, int height);
+typedef void (*EZmousefun)(double mouseX, double mouseY);
+typedef void (*EZclickfun)(int button, int action);
 
 struct _EZobject;
 typedef struct _EZobject EZobject;
@@ -54,19 +56,29 @@ int ezGetHeight(void);
 // Sets the function to run when a key is pressed
 // Must follow the pattern:
 // void functionName(int key, int action)
-void ezSetKeyCallback(EZkeyfun callback);
+void ezSetKeyFunction(EZkeyfun function);
 
-// Sets the function to run when a new object cannot be allocated on the heap
-// Does not handle other out of memory issues.
+// Sets the function to run when the mouse is moved on the window
 // Must follow the pattern:
-// int functionName(void)
-void ezSetOutOfMemoryCallback(EZmemerrfun callback);
+// void functionName(double mouseX, double mouseY)
+void ezSetMouseFunction(EZmousefun function);
+
+// Sets the function to run when the mouse is moved on the window
+// Must follow the pattern:
+// void functionName(int button, int action)
+void ezSetClickFunction(EZclickfun function);
 
 // Sets the function to run when the window is resized
 // DO NOT CALL ezDisplaySize FROM THIS
 // Must follow the pattern:
 // void functionName(int width, int height)
-void ezSetResizeCallback(EZresizefun callback);
+void ezSetResizeFunction(EZresizefun function);
+
+// Sets the function to run when a new object cannot be allocated on the heap
+// Does not handle other out of memory issues.
+// Must follow the pattern:
+// int functionName(void)
+void ezSetOutOfMemoryCallback(EZmemerrfun function);
 
 // ================
 // Object Functions
