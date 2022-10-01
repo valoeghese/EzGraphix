@@ -85,8 +85,14 @@ void ezSetOutOfMemoryFunction(EZmemerrfun function);
 // ================
 
 // Creates a rectangle object of the given width and height
+// Positioned from the bottom left.
 // EZ objects are allocated on the heap and in GL memory, so make sure to delete them via ezDelete() when you're done with them
 EZobject* ezCreateRect(float width, float height);
+
+// Creates a circle object of the given radius
+// Positioned from the centre.
+// EZ objects are allocated on the heap and in GL memory, so make sure to delete them via ezDelete() when you're done with them
+EZobject* ezCreateCircle(float width, float height);
 
 // Moves an object to the given position
 void ezMove(EZobject* object, float x, float y);

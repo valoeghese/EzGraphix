@@ -33,14 +33,21 @@ struct EzGlobalContext {
 // Struct 
 
 struct _EZobject {
+	// internal OpenGL objects
 	int ibo;
 	int vbo;
-	int roundness;
+	// Colour
 	float r;
 	float g;
 	float b;
+	// Position
 	float x;
 	float y;
+	// Centre Position
+	float centreX;
+	float centreY;
+	// Fillet Radius
+	float filletRadius;
 };
 
 // Window
@@ -71,9 +78,7 @@ int ezGetHeight(void) {
 	return g_ezCtx.winHeight;
 }
 
-// Callbacks
-
-// Impl (GLFW event handlers)
+// Callbacks: Impl (GLFW event handlers)
 
 void ezKeyHook(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	if (g_ezCtx.keyFun) {
@@ -101,7 +106,7 @@ void ezClickHook(GLFWwindow* window, int button, int action, int mods) {
 	}
 }
 
-// API
+// Callbacks: API
 
 void ezSetKeyFunction(EZkeyfun function) {
 	g_ezCtx.keyFun = function;
@@ -155,6 +160,11 @@ EZobject* ezCreateRect(float width, float height) {
 	// Set position
 	obj->x = 0.0f;
 	obj->y = 0.0f;
+
+	// Set data used for fillet
+	obj->centreX = width;
+	obj->centreY = height;
+	obj->filletRadius = 0;
 
 	// this used to be bad. *do* do this
 	// (i used to create an object for every draw call)
