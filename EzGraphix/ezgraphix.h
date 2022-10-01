@@ -78,7 +78,7 @@ void ezSetResizeFunction(EZresizefun function);
 // Does not handle other out of memory issues.
 // Must follow the pattern:
 // int functionName(void)
-void ezSetOutOfMemoryCallback(EZmemerrfun function);
+void ezSetOutOfMemoryFunction(EZmemerrfun function);
 
 // ================
 // Object Functions

@@ -11,6 +11,10 @@ void key(int key, int action)
 	ezClose();
 }
 
+void click(int button, int action) {
+	printf("Action %d\n", action);
+}
+
 void resize(int width, int height)
 {
 	ezMove(object, width / 3, 3 * height / 8);
@@ -28,6 +32,7 @@ int setup(void)
 	ezDisplaySize(width, height);
 
 	ezSetKeyFunction(key);
+	ezSetClickFunction(click);
 	ezSetResizeFunction(resize);
 
 	object = ezCreateRect(width / 3, height / 4);
