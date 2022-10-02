@@ -299,6 +299,13 @@ void ezDraw(EZobject *object) {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
+// TODO compound objects.
+//void ezDrawArrays(EZobject* objects, int length) {
+//	for (int i = 0; i < length; i++) {
+//		ezDraw(&(objects[i]));
+//	}
+//}
+
 //===============
 //    Main
 //=============
