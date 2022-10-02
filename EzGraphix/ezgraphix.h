@@ -1,3 +1,13 @@
+//
+// The core header for EzGraphix.
+// Contains the functions for all things graphics.
+// The implementation of these functions can be found in ezgraphix.c
+// 
+// For the accompanying mathematics utility header, see ezmaths.h
+//
+// Author: Mekal Covic
+//
+
 #pragma once
 
 // Include gl stuff
@@ -9,9 +19,12 @@
 extern "C" {
 #endif
 
-// Setup Values and Types
+// ======================
+// Constants & Data Types
+// ======================
+
 #define EZ_OK 1
-#define EZ_ERR 0
+#define EZ_CANCEL 0
 
 #define EZ_GENERIC_ERROR_CODE -1
 #define EZ_SUCCESS_ERROR_CODE 0
@@ -27,7 +40,7 @@ typedef void (*EZresizefun)(int width, int height);
 typedef void (*EZmousefun)(double mouseX, double mouseY);
 typedef void (*EZclickfun)(int button, int action);
 
-struct EZobject;
+struct _EZobject;
 typedef struct _EZobject EZobject;
 
 // ================
@@ -40,8 +53,8 @@ void ezTitle(const char* title);
 // Sets the size of the window
 void ezDisplaySize(const int width, const int height);
 
-// Closes the application immediately and exits
-void ezClose(void);
+// Mark the window as ready to exit at the end of the frame.
+void ezSetShouldClose(void);
 
 // Gets the window width
 int ezGetWidth(void);
@@ -92,7 +105,18 @@ EZobject* ezCreateRect(float width, float height);
 // Creates a circle object of the given radius
 // Positioned from the centre.
 // EZ objects are allocated on the heap and in GL memory, so make sure to delete them via ezDelete() when you're done with them
-EZobject* ezCreateCircle(float width, float height);
+EZobject* ezCreateCircle(float radius);
+
+// Sets the anchor position of an object.
+// This determines where on the object its "position" should refer to.
+// The default depends on which function you use create your object.
+//
+// Parameters:
+//   x = the 'x' position of the anchor, as a proportion of the width, relative to the bottom left of the object.
+//       For example, 0.5 at the horizontal centre.
+//   y = the 'y' position of the anchor, as a proportion of the height, relative to the bottom right of the object.
+//       For example, 0.5 at the vertical centre.
+void ezAnchor(EZobject* object, float x, float y);
 
 // Moves an object to the given position
 void ezMove(EZobject* object, float x, float y);

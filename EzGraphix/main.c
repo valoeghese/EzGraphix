@@ -3,67 +3,21 @@
 //#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
 
 #include "ezgraphix.h"
+#include "ezmaths.h"
 #include <math.h>
 
 #define PI 3.141592f
 
 EZobject* object;
-
-// Converts HSV to RGB
-// http://www.easyrgb.com/en/math.php
-void hsv(float h, float s, float v, float* r, float* g, float* b) {
-	if (s == 0) {
-		*r = v;
-		*g = v;
-		*b = v;
-	}
-	else {
-		float var_h = h * 6;
-		
-		if (var_h == 6) var_h = 0; //H must be < 1
-		int var_i = (int) (var_h);
-		float var_1 = v * (1 - s);
-		float var_2 = v * (1 - s * (var_h - var_i));
-		float var_3 = v * (1 - s * (1 - (var_h - var_i)));
-
-		float var_r;
-		float var_g;
-		float var_b;
-
-		switch (var_i) {
-		case 0:
-			var_r = v; var_g = var_3; var_b = var_1;
-			break;
-		case 1:
-			var_r = var_2; var_g = v; var_b = var_1;
-			break;
-		case 2:
-			var_r = var_1; var_g = v; var_b = var_3;
-			break;
-		case 3:
-			var_r = var_1; var_g = var_2; var_b = v;
-			break;
-		case 4:
-			var_r = var_3; var_g = var_1; var_b = v;
-			break;
-		default:
-			var_r = v; var_g = var_1; var_b = var_2;
-			break;
-		}
-
-		*r = var_r;
-		*g = var_g;
-		*b = var_b;
-	}
-}
+EZobject* randomCircle;
 
 void key(int key, int action)
 {
-	ezClose();
+	ezSetShouldClose();
 }
 
 void click(int button, int action) {
-	printf("Action %d\n", action);
+	printf("Action %d, Button %d\n", action, button);
 }
 
 void mouseMove(double mouseX, double mouseY) {
@@ -78,11 +32,11 @@ void resize(int width, int height)
 
 int setup(void)
 {
-	const int width = 690;
-	const int height = 420;
-
 	// Perform setup here
 	// e.g. configuring the window, setting up callback functions, and some object creation
+	const int width = 690;
+	const int height = 420;
+	
 	ezTitle("My Graphics Program!");
 	ezDisplaySize(width, height);
 
@@ -91,12 +45,19 @@ int setup(void)
 	ezSetMouseMoveFunction(mouseMove);
 	ezSetResizeFunction(resize);
 
+	// create first object
 	object = ezCreateRect(width / 3, height / 4);
 
 	ezFilletRadius(object, 20.0);
 	ezColour(object, 0.0f, 0.0f, 1.0f);
 	ezMove(object, width / 3, 3 * height / 8);
 
+	// create second object
+	randomCircle = ezCreateCircle(30.0);
+	ezColour(randomCircle, 0.6f, 0.6f, 0.6f);
+	ezMove(randomCircle, width / 2, height / 2);
+
+	// Setup went ok. Proceed with running the program!
 	return EZ_OK;
 }
 
@@ -104,14 +65,21 @@ float time = 0;
 
 void draw(void)
 {
-	float r, g, b;
-	hsv(time / (2 * PI), 1.0f, 1.0f, &r, &g, &b);
-
-	ezBackgroundColour(r, g, b);
-
 	// Draw a frame here
-	ezDraw(object);
 
+	// rainbow colour effect!
+	// Get R,G,B for the given HSV values, where the hue is dependent on time, and S and V are always 1
+	float r, g, b;
+	ezHSV(time / (2 * PI), 1.0f, 1.0f, &r, &g, &b);
+
+	// this sets the background colour
+	ezBackgroundColour(r, g, b);
+	
+	// draw objects
+	ezDraw(object);
+	ezDraw(randomCircle);
+
+	// update the time & keep in the range [0,2pi]
 	time += 0.01;
 	if (time >= 2 * PI) {
 		time = 0;
@@ -120,6 +88,8 @@ void draw(void)
 
 void cleanup(void)
 {
-	// delete objects here
+	// do anything you need to before the program exits here
+	// for example deleting objects that haven't already been deleted
 	ezDelete(object);
+	ezDelete(randomCircle);
 }

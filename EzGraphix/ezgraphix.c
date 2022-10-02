@@ -43,6 +43,9 @@ struct _EZobject {
 	// Position
 	float x;
 	float y;
+	// Used for the anchor thing. As a proportion of width/height.
+	float anchorX;
+	float anchorY;
 	// Dimensions
 	float width;
 	float height;
@@ -66,7 +69,7 @@ void ezDisplaySize(const int width, const int height) {
 	glUniform2f(glGetUniformLocation(g_ezCtx.shaderProgram, "window_size"), (float)width, (float)height);
 }
 
-void ezClose(void) {
+void ezSetShouldClose(void) {
 	glfwSetWindowShouldClose(g_ezCtx.window, 1);
 }
 
@@ -80,13 +83,13 @@ int ezGetHeight(void) {
 
 // Callbacks: Impl (GLFW event handlers)
 
-void ezKeyHook(GLFWwindow* window, int key, int scancode, int action, int mods) {
+static void ezKeyHook(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	if (g_ezCtx.keyFun) {
 		g_ezCtx.keyFun(key, action);
 	}
 }
 
-void ezResizeHook(GLFWwindow* window, int width, int height) {
+static void ezResizeHook(GLFWwindow* window, int width, int height) {
 	ezDisplaySize(width, height);
 
 	if (g_ezCtx.resizeFun) {
@@ -94,13 +97,13 @@ void ezResizeHook(GLFWwindow* window, int width, int height) {
 	}
 }
 
-void ezMouseHook(GLFWwindow* window, double mouseX, double mouseY) {
+static void ezMouseHook(GLFWwindow* window, double mouseX, double mouseY) {
 	if (g_ezCtx.mouseFun) {
 		g_ezCtx.mouseFun(mouseX, (double)g_ezCtx.winHeight - mouseY);
 	}
 }
 
-void ezClickHook(GLFWwindow* window, int button, int action, int mods) {
+static void ezClickHook(GLFWwindow* window, int button, int action, int mods) {
 	if (g_ezCtx.clickFun) {
 		g_ezCtx.clickFun(button, action);
 	}
@@ -146,6 +149,7 @@ EZobject* ezCreateRect(float width, float height) {
 		}
 
 		if (shouldExit) {
+			cleanup();
 			exit(EZ_OUT_OF_HEAP_MEMORY_ERROR_CODE);
 		}
 
@@ -161,12 +165,15 @@ EZobject* ezCreateRect(float width, float height) {
 	obj->x = 0.0f;
 	obj->y = 0.0f;
 
+	obj->anchorX = 0.0f;
+	obj->anchorY = 0.0f;
+
 	// Set data used for fillet
 	obj->width = width;
 	obj->height = height;
 	obj->filletRadius = 0;
 
-	// this used to be bad, but isn't anymore. *do* do this
+	// the code for this used to be bad, but isn't anymore. *do* do this
 	// (i used to create an object for every draw call)
 	glGenBuffers(1, &(obj->vbo));
 	glGenBuffers(1, &(obj->ibo));
@@ -189,15 +196,27 @@ EZobject* ezCreateRect(float width, float height) {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, &(obj->ibo));
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices, GL_STATIC_DRAW);
 
-	// (location = 0) in vec2 pos
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 0, 0);
-	glEnableVertexAttribArray(0);
-
 	// unbind buffers
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	return obj;
+}
+
+EZobject* ezCreateCircle(float radius) {
+	// create object via ezCreateRect
+	EZobject* result = ezCreateRect(radius * 2, radius * 2);
+	// anchor in centre
+	ezAnchor(result, 0.5f, 0.5f);
+	// set fillet
+	ezFilletRadius(result, radius);
+	// return
+	return result;
+}
+
+void ezAnchor(EZobject* object, float x, float y) {
+	object->anchorX = x;
+	object->anchorY = y;
 }
 
 void ezMove(EZobject* object, float x, float y) {
@@ -221,7 +240,6 @@ void ezResize(EZobject* object, float width, float height) {
 	};
 
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices, GL_DYNAMIC_DRAW);
-
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
@@ -254,8 +272,15 @@ void ezDraw(EZobject *object) {
 	glBindBuffer(GL_ARRAY_BUFFER, &(object->vbo));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, &(object->ibo));
 
+	// Attach buffer data
+	// (location = 0) in vec2 pos
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 0, 0);
+	glEnableVertexAttribArray(0);
+
+	// Set uniforms
+
 	glUniform3f(glGetUniformLocation(g_ezCtx.shaderProgram, "colour"), object->r, object->g, object->b);
-	glUniform2f(glGetUniformLocation(g_ezCtx.shaderProgram, "position"), object->x, object->y);
+	glUniform2f(glGetUniformLocation(g_ezCtx.shaderProgram, "position"), object->x - object->anchorX * object->width, object->y - object->anchorY * object->height);
 
 	glUniform2f(glGetUniformLocation(g_ezCtx.shaderProgram, "dimensions"), object->width, object->height);
 	glUniform1f(glGetUniformLocation(g_ezCtx.shaderProgram, "filletRadius"), object->filletRadius);

@@ -21,9 +21,15 @@
     <ClCompile Include="ezgraphix.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ezmaths.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ezgraphix.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ezmaths.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
