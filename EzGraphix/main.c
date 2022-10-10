@@ -14,7 +14,9 @@ int image;
 
 void key(int key, int action)
 {
-	ezSetShouldClose();
+	if (key == GLFW_KEY_ESCAPE) {
+		ezSetShouldClose();
+	}
 }
 
 void click(int button, int action)

@@ -241,11 +241,11 @@ void ezResize(EZobject* object, float width, float height) {
 	// update buffer data
 	glBindBuffer(GL_ARRAY_BUFFER, &(object->vbo));
 
-	const float vertices[12] = {
-		0, height,
-		0, 0,
-		width, 0,
-		width, height
+	const float vertices[4 * 4] = {
+		0.0f, height, 0.0f, 1.0f,
+		0.0f, 0.0f, 0.0f, 0.0f,
+		width, 0.0f, 1.0f, 0.0f,
+		width, height, 1.0f, 1.0f
 	};
 
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices, GL_DYNAMIC_DRAW);
