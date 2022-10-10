@@ -1,5 +1,8 @@
 #include "ezgraphix.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <Windows.h>
@@ -51,6 +54,8 @@ struct _EZobject {
 	float height;
 	// Fillet Radius
 	float filletRadius;
+	// Texture
+	int texture;
 };
 
 // Window
@@ -173,16 +178,20 @@ EZobject* ezCreateRect(float width, float height) {
 	obj->height = height;
 	obj->filletRadius = 0;
 
+	// default texture
+	obj->texture = 0;
+
 	// the code for this used to be bad, but isn't anymore. *do* do this
 	// (i used to create an object for every draw call)
 	glGenBuffers(1, &(obj->vbo));
 	glGenBuffers(1, &(obj->ibo));
 
-	const float vertices[12] = {
-		0, height,
-		0, 0,
-		width, 0,
-		width, height
+	// Vertex Coords	UV Coords
+	const float vertices[16] = {
+		0, height,		0, 1,
+		0, 0,			0, 0,
+		width, 0,		1, 0,
+		width, height,	1, 1
 	};
 
 	glBindBuffer(GL_ARRAY_BUFFER, &(obj->vbo));
@@ -253,6 +262,10 @@ void ezFilletRadius(EZobject* object, float radius) {
 	object->filletRadius = radius;
 }
 
+void ezTexture(EZobject* object, int image) {
+	object->texture = image;
+}
+
 void ezDelete(EZobject* object) {
 	// delete from GL memory
 	glDeleteBuffers(1, &(object->vbo));
@@ -260,6 +273,52 @@ void ezDelete(EZobject* object) {
 
 	// free from heap
 	free(object);
+}
+
+// Image Functions
+
+int ezLoadImage(const char* fileName) {
+	// ===========
+	// STEP 1: create opengl tex obj 
+	// ============
+
+	// generate opengl texture object
+	int texture;
+	glGenTextures(1, &texture);
+	// bind texture
+	glBindTexture(GL_TEXTURE_2D, texture);
+
+	// only use NEAREST NEIGHBOUR!
+	// if you want your textures interpolated feel free to change this to GL_LINEAR / GL_LINEAR_MIPMAP_LINEAR tho
+	// could make interpolation method a parameter in a future version, or make another function to set it
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+
+	// ===========
+	// STEP 2: actually load image
+	// ============
+	
+	// load imgae from file
+	int width, height, channels;
+	stbi_set_flip_vertically_on_load(1);
+	unsigned char* data = stbi_load(fileName, &width, &height, &channels, 0);
+
+	// load image data to opengl texture object and gen mipmap
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	// free loaded image data
+	stbi_image_free(data);
+
+	// unbind texture
+	// probably not necessary
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	return texture;
+}
+
+void ezFreeImage(int image) {
+	glDeleteTextures(1, &image);
 }
 
 // Draw Functions
@@ -274,8 +333,11 @@ void ezDraw(EZobject *object) {
 
 	// Attach buffer data
 	// (location = 0) in vec2 pos
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 0, 0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 4, sizeof(float) * 0);
 	glEnableVertexAttribArray(0);
+	// (location = 1) in vec2 uv
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 4, sizeof(float) * 2);
+	glEnableVertexAttribArray(1);
 
 	// Set uniforms
 
@@ -285,12 +347,13 @@ void ezDraw(EZobject *object) {
 	glUniform2f(glGetUniformLocation(g_ezCtx.shaderProgram, "dimensions"), object->width, object->height);
 	glUniform1f(glGetUniformLocation(g_ezCtx.shaderProgram, "filletRadius"), object->filletRadius);
 
-	// todo move this to separate method?
-	int err = glGetError();
-
-	if (err) {
-		printf("OpenGL Error %d\n", err);
-	}
+	// Texture
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, object->texture);
+	// 0 is treated as false, all else is true. Thus, we can define "hasTexture" as the id of the texture
+	glUniform1i(glGetUniformLocation(g_ezCtx.shaderProgram, "hasTexture"), object->texture);
+	// gotta set the sampler to use active texture 0
+	glUniform1i(glGetUniformLocation(g_ezCtx.shaderProgram, "textureSampler"), 0);
 
 	//glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(int), GL_UNSIGNED_INT, 0);
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -306,6 +369,11 @@ void ezDraw(EZobject *object) {
 //	}
 //}
 
+int ezGetOpenGLError(void) {
+	// todo move this to separate method?
+	return glGetError();
+}
+
 //===============
 //    Main
 //=============
@@ -316,7 +384,7 @@ void ezDraw(EZobject *object) {
 static void ezCheckShaderErrors(const GLFWwindow* window, const int shader, const char* shaderType);
 
 int main(void) {
-	printf("Yeef.\n");
+	printf("Starting Up...\n");
 
 	// startup
 	if (!glfwInit()) {
@@ -340,14 +408,17 @@ int main(void) {
 	const char* vertexShaderSource =
 		"#version 330 core\n"
 		"layout(location = 0) in vec2 vertexPosition;\n"
+		"layout(location = 1) in vec2 uv;\n"
 
 		"out vec2 posPass;\n"
+		"out vec2 uvPass;\n"
 
 		"uniform vec2 window_size;\n"
 		"uniform vec2 position;\n"
 
 		"void main() {\n"
 		"  posPass = vertexPosition;\n" // position relative to the shape. Will be interpolated for each pixel when passed to the fragment shader
+		"  uvPass = uv;\n"
 		// map from 0,0,WIDTH,HEIGHT to -1,1,-1,1.
 		"  vec2 half_size = window_size * 0.5;\n"
 		"  gl_Position = vec4(((vertexPosition + position) / half_size) - 1, 0.0, 1.0);\n"
@@ -362,11 +433,15 @@ int main(void) {
 		"#version 330 core\n"
 
 		"in vec2 posPass;\n"
+		"in vec2 uvPass;\n"
 
 		"uniform vec3 colour;\n"
 
 		"uniform vec2 dimensions;\n"
 		"uniform float filletRadius;\n"
+
+		"uniform bool hasTexture;\n"
+		"uniform sampler2D textureSampler;\n"
 
 		"void main() {\n"
 		// detect edge boxes that encompass the fillet curves,
@@ -399,7 +474,13 @@ int main(void) {
 		"    }\n"
 		"  }\n"
 
-		"  gl_FragColor = vec4(colour, 1.0);\n"
+		// If Texture, use that
+		"  if (hasTexture) {\n"
+		"    gl_FragColor = texture(textureSampler, uvPass);\n"
+		"  } else {\n"
+		// Else, use colour
+		"    gl_FragColor = vec4(colour, 1.0);\n"
+		"  }\n"
 		"}";
 
 	unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);

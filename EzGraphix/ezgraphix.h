@@ -62,6 +62,10 @@ int ezGetWidth(void);
 // Gets the window height
 int ezGetHeight(void);
 
+// Gets the error code of the latest OpenGL error. If there was no error, returns 0.
+// If you receive an error code, search it up on the internet to see what it means and hope to gosh it's helpful.
+int ezGetOpenGLError(void);
+
 // ==================
 // Callback Functions
 // ==================
@@ -86,12 +90,25 @@ void ezSetClickFunction(EZclickfun function);
 // Must follow the pattern:
 // void functionName(int width, int height)
 void ezSetResizeFunction(EZresizefun function);
-
+  
 // Sets the function to run when a new object cannot be allocated on the heap
 // Does not handle other out of memory issues.
 // Must follow the pattern:
 // int functionName(void)
 void ezSetOutOfMemoryFunction(EZmemerrfun function);
+
+// ===============
+// Image Functions
+// ===============
+
+// Loads the image into GPU memory from the given file
+// If sharing your program with others, make sure to distribute your images with it.
+// The images are relative to the folder the exe is in (same as if you're using fopen and stuff)
+int ezLoadImage(const char* fileName);
+
+// Frees the image from GPU memory.
+// The image can no longer be used after freeing it.
+void ezFreeImage(int image);
 
 // ================
 // Object Functions
@@ -130,6 +147,11 @@ void ezColour(EZobject* object, float r, float g, float b);
 // Sets the radius of the edge fillet of an object.
 // Should be <= half the smallest dimension of the object.
 void ezFilletRadius(EZobject* object, float radius);
+
+// Sets the texture image of this object
+// Use the id of an image loaded with ezLoadImage for an image
+// Use 0 to represent no texture
+void ezTexture(EZobject* object, int image);
 
 // Deletes an object from memory
 void ezDelete(EZobject* object);

@@ -13,24 +13,41 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\ezgraphix">
+      <UniqueIdentifier>{c39f31e6-14e9-467d-be01-3886f84d7865}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\stb_libraries">
+      <UniqueIdentifier>{27caf184-e13e-4a58-bbaa-56b6f609f342}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\exgraphix">
+      <UniqueIdentifier>{ad35ac4b-dd5c-4fa9-9051-7e92f31f44ee}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ezgraphix.c">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\ezgraphix</Filter>
     </ClCompile>
     <ClCompile Include="ezmaths.c">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\ezgraphix</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="stb_image.h">
+      <Filter>Header Files\stb_libraries</Filter>
+    </ClInclude>
     <ClInclude Include="ezgraphix.h">
-      <Filter>Source Files</Filter>
+      <Filter>Header Files\exgraphix</Filter>
     </ClInclude>
     <ClInclude Include="ezmaths.h">
-      <Filter>Source Files</Filter>
+      <Filter>Header Files\exgraphix</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="maminonawa.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

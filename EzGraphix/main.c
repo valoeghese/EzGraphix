@@ -10,17 +10,20 @@
 
 EZobject* object;
 EZobject* randomCircle;
+int image;
 
 void key(int key, int action)
 {
 	ezSetShouldClose();
 }
 
-void click(int button, int action) {
+void click(int button, int action)
+{
 	printf("Action %d, Button %d\n", action, button);
 }
 
-void mouseMove(double mouseX, double mouseY) {
+void mouseMove(double mouseX, double mouseY)
+{
 	printf("Move %lf %lf\n", mouseX, mouseY);
 }
 
@@ -54,8 +57,19 @@ int setup(void)
 
 	// create second object
 	randomCircle = ezCreateCircle(30.0);
-	ezColour(randomCircle, 0.6f, 0.6f, 0.6f);
 	ezMove(randomCircle, width / 2, height / 2);
+
+	// load texture and set circle to have texture 
+	image = ezLoadImage("maminonawa.png");
+	printf("Image ID: %d\n", image);
+	ezTexture(randomCircle, image);
+
+	// Test for errors
+	int error = ezGetOpenGLError();
+
+	if (error) {
+		printf("OpenGL error on setup: %d\n", error);
+	}
 
 	// Setup went ok. Proceed with running the program!
 	return EZ_OK;
@@ -84,6 +98,13 @@ void draw(void)
 	if (time >= 2 * PI) {
 		time = 0;
 	}
+
+	// Test for errors
+	int error = ezGetOpenGLError();
+
+	if (error) {
+		printf("OpenGL error on draw: %d\n", error);
+	}
 }
 
 void cleanup(void)
@@ -92,4 +113,6 @@ void cleanup(void)
 	// for example deleting objects that haven't already been deleted
 	ezDelete(object);
 	ezDelete(randomCircle);
+
+	ezFreeImage(image);
 }
