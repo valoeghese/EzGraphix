@@ -477,6 +477,7 @@ int main(void) {
 		// If Texture, use that
 		"  if (hasTexture) {\n"
 		"    gl_FragColor = texture(textureSampler, uvPass) * vec4(colour, 1.0);\n"
+		"    if (gl_FragColor.a <= 0.0) discard;\n"
 		"  } else {\n"
 		// Else, use colour
 		"    gl_FragColor = vec4(colour, 1.0);\n"
